@@ -1,0 +1,126 @@
+---
+layout:     post
+title:      "ionic踩过的那些坑"
+subtitle:   "ionic app"
+date:       2017-07-20 17:00:00
+author:     "freefish"
+cdn: header-off
+header-img: "/img/post-bg-js-version.jpg"
+tags:
+    - js
+    - app
+    - Linux
+---
+
+# ionic开发遇到的坑
+
+这几天做了一个APP端的连续两个保存数据的页面，需求是当跳转到其他页面，在跳转之前会给一个是否确认跳转的弹层。这时候改写了全局的回退事件，为了不影响所有页面的回退，在进入编辑页面的时候会重写回退事件，在退出页面的时候再把重写的回退事件去掉。这时候就有个问题，因为ionic会缓存页面和scope，所以会出现$ionicView.enter和$ioinicView.leave两个事件不执行。
+具体看下代码：
+xxx.controller.js
+```
+        //进入页面
+        $scope.$on('$ionicView.enter', function(event, data) {
+            // 回退事件拦截
+            $rootScope.backEvents.ifBlock = true;
+            $rootScope.backEvents.add('feedBackEditTip', function() {
+                goBack().then(function() {
+                    // alert(1);
+                    $ionicHistory.goBack(-1);
+                });
+            });
+            init();
+        });
+    //退出页面   
+    $scope.$on('$ionicView.leave', function(ev) {
+            $rootScope.backEvents.ifBlock = false;
+            $rootScope.backEvents.delete('feedBackEditTip');
+        });
+
+```
+$rootScope.backEvents是一个全局的事件队列，主要放回退事件的一个队列：
+app.run.js
+```
+    //端上点击换回按钮调起事件
+        $rootScope.backEvents = new eventRegister();
+        //增加一个标志位判断是否需要block，即不实际返回
+        $rootScope.backEvents.ifBlock = false;
+
+        $window.onNativeNavBack = function() {
+            //如果没有历史则关闭hybrid
+            if (!$ionicHistory.backView()) {
+                window.CloseWindow.closeWindow(function() {}, function() {});
+                return;
+            }
+            if ($rootScope.backEvents.ifBlock == false) {
+                //如果注册back方法，则执行
+                if ($rootScope.nativeNavBackFun) {
+                    $rootScope.nativeNavBackFun();
+                } else {
+                    $ionicHistory.goBack(-1);
+                }
+            }
+            $rootScope.backEvents.trigerAll();
+        }
+
+```
+事件队列函数：
+```
+/*
+    暂时用途：
+        当用户点击返回按钮，已经页面切换时，需要一套事件注册，触发，删除机制，应该是所谓的观察者模式吧
+
+*/
+
+function sommeEvent() {
+    this.catchEvent = {};
+}
+sommeEvent.prototype.add = function(keyName, callBack) {
+    if (typeof(callBack) != 'function') {
+        return false;
+    }
+    this.catchEvent[keyName] = callBack;
+    return true
+};
+sommeEvent.prototype.delete = function(keyName) {
+    if (this.catchEvent[keyName]) {
+        delete this.catchEvent[keyName];
+        return true;
+    }
+    return false;
+};
+
+sommeEvent.prototype.trigerAll = function() {
+    for (var i in this.catchEvent) {
+        if (typeof this.catchEvent[i] == 'function') {
+            try {
+                this.catchEvent[i]();
+            } catch (e) {
+                console.log(e);
+            }
+        }
+    }
+}
+sommeEvent.prototype.triger = function(keyName) {
+    this.catchEvent[keyName] && this.catchEvent[keyName]();
+}
+module.exports = sommeEvent;
+
+```
+
+这时候只需要一个清除上个页面的缓存，这样就保证页面的事件会被执行：
+
+### 重点
+
+```
+//进入页面之前先清楚上个页面的缓存，保证上个页面的离开事件顺利执行
+$scope.$on('$ionicView.beforeEnter', function() {
+            // 清除上一个页面的缓存
+            var clearBeforePage = function() {
+                var history = $ionicHistory.forwardView();
+                if (history && history.stateName) {
+                    $ionicHistory.removeBackView();
+                }
+            };
+            clearBeforePage();
+        });
+```

@@ -1,0 +1,85 @@
+---
+layout:    post
+title:     "解决文本框的中文输入法问题处理"
+subtitle:  "js事件"
+date:      2018-03-08 11:27:00
+author:    "freefish"
+cdn: header-off
+header-img: "/img/post-bg-js-version.jpg"
+tags:
+    - js基础
+    - 前端必备技能
+    - 事件处理
+---
+# 解决文本框的中文输入法问题处理
+
+现在有个需求，就是输入内容，实时调取后端接口。刚开始考虑用input事件。
+如下例子：
+```
+<body id="content">
+    <input type="text" id="text">
+</body>
+<script>
+    $('#text').on('input', function() {
+    var value = $(this).val();
+    // doing something...
+});
+</script>
+```
+
+我们先来了解一下input事件：
+
+### 基本信息 
+支持text和textarea两种元素。当 input 或 textarea 元素的值更改时，DOM input 事件会同步触发。(对于 type = checkbox 或 type = radio 的输入元素，当用户单击控件时，输入事件不会触发，因为value属性不会更改。) 此外，当内容更改时，它会在 contenteditable 的编辑器上触发。在这种情况下，事件目标是编辑主机元素。如果有两个或多个具有 [contenteditable](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/contentEditable) 的元素为真，“编辑主机”是其父级不可编辑的最近的祖先元素。同样，它也会在  [designMode](https://developer.mozilla.org/en-US/docs/Web/API/Document/designMode) 编辑器的根元素上触发。
+
+### 兼容性
+
+Feature | Chrome | Firefox (Gecko) | Internet Explorer | Opera | 	Safari
+---|---|---|---|---|---
+basic support | yes | yes[1] | yes[2] | yes[3] | yes 
+紧随 compositionupdate 之后触发 | yes | [12](https://developer.mozilla.org/en-US/Firefox/Releases/12) | yes | 未实现 | yes
+可用于 contenteditable 元素 | yes | [14](https://developer.mozilla.org/en-US/Firefox/Releases/14) | 未实现 | 15 | yes
+
+
+[1] 在 Gecko 12.0 (Firefox 12.0 / Thunderbird 12.0 / SeaMonkey 2.9) 之前，用户在输入法中输入时，或者 dead keys were used on Mac OS X 时，Gecko 不触发 input 事件。
+
+[2] IE 9 在用户删除输入的文字时不触发 input 事件(例如，按 Backspace 或者删除键，或者“剪切”文字).
+
+[3] Opera 在用户把文字拖进输入框时，不触发 input 事件。
+
+[4] 事件 target 是光标所在的最内侧的元素。
+
+### 问题来了
+input在输入字母和数字上都没有问题，但是对中文输入法有个头疼的问题，就是在拼写输入汉字的时候，每一个字符都会触发input事件，这样是不友好。如下图：
+<img src="../../../../img/post_img/input.png" />
+
+### 解决办法：
+配合compositionstart/compositionend两个事件可以完美解决问题。
+- compositionstart - 事件触发于一段文字的输入之前 (类似于 keydown 事件，但是该事件仅在若干可见字符的输入之前，而这些可见字符的输入可能需要一连串的键盘操作、点击输入法的备选词等)。
+- compositionend - 事件触发于完成文本段落输入或取消输入。
+
+**这三个事件的触发顺序：compositionstart->input->compositionend。所以通常可以在compositionstart的时候做拦截；compositionend之后重新触发一下input事件。如下例子：**
+
+```
+<body id="content">
+    <input type="text" id="text">
+</body>
+<script>
+    $(document).ready(function() {
+        $('#text').on('input', function() {
+            if ($(this).prop('comStart')) return; // 中文输入过程中不截断
+            var value = $(this).val();
+            console.log('当前输入：' + value);
+        }).on('compositionstart', function() {
+            $(this).prop('comStart', true);
+            console.log('中文输入：开始');
+        }).on('compositionend', function() {
+            $(this).prop('comStart', false);
+            console.log('中文输入：结束');
+            $(this).trigger('input');
+        });
+    });
+</script>
+```
+结果很完美，如图输出：
+<img src="../../../../img/post_img/input1.png"/>

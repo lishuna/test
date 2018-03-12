@@ -1,0 +1,114 @@
+---
+layout:    post
+title:     "git常用命令整理"
+subtitle:  "代码提交工具使用"
+date:      2017-07-26 11:27:00
+author:    "freefish"
+cdn: header-off
+header-img: "/img/post-bg-js-module.jpg"
+tags:
+    - git
+    - 前端必备技能
+    - 常用命令
+---
+
+git用了这么久，还是有很多命令记不住，索性写个文档记录下来，以备后用。
+
+- [准备工作](#ready)
+    - [安装git](#init)
+    - [创建ssh-key](#ssk-key)
+    - [创建版本库](#create)
+- [时光穿梭](#reset)
+    - [版本回退](#goback)
+    - 
+    - 
+### <a id="ready">准备工作</a>
+#### 1.<a id="init">安装git</a>
+
+mac下，默认已经装了brew，如果没装请自行百度。
+用brew安装git
+```
+brew install git
+```
+安装完全局设置:
+```
+$ git config --global user.name "Your Name"
+$ git config --global user.email "email@example.com"
+```
+因为Git是分布式版本控制系统，所以，每个机器都必须自报家门：你的名字和Email地址。你也许会担心，如果有人故意冒充别人怎么办？这个不必担心，首先我们相信大家都是善良无知的群众，其次，真的有冒充的也是有办法可查的。
+
+**注意git config命令的--global参数，用了这个参数，表示你这台机器上所有的Git仓库都会使用这个配置，当然也可以对某个仓库指定不同的用户名和Email地址。**
+
+#### 2. <a id="ssk-key">生成ssh-key:</a>
+```
+    ssh-keygen -t rsa -C "zhangsan@163.com" 
+```
+首先-t是指定算法 -C是创建用户.创建的ssh-key默认存储在~/.ssh/id_rsa.pub里，如果你有多个git账户，那么可以重命名一个存储文件，然后在~/.ssh/config创建一个config文件，进行如下配置：
+```
+# 该文件用于配置私钥对应的服务器
+#  Default github user
+ Host git.xxx.com
+ HostName git.xxx.com
+ User freefish
+ IdentityFile /Users/xxx/.ssh/id_rsa_jdb
+#
+# second user
+# 建一个github别名，新建的帐号使用这个别名做克隆和更新
+ Host github.com
+ HostName github.com
+ User freefish_github
+ IdentityFile /Users/xxx/.ssh/id_rsa
+```
+#### 3. <a id="create">创建版本库</a>
+```
+     git init
+```
+创建完以后需要本地和远程库关联。需要在github上同样创建一个库，然后使用下面命令进行关联:
+```
+    git remote add origin git地址(类似：git@github.com:lishuna/gulp-study.git)
+```
+### <a id="reset">时光穿梭</a>
+
+#### 1. <a id="goBack">版本回退</a>
+版本回退实际利用git log命令，获取到要回退版本提交的commit id，然后利用git reset命令进行回退。
+```
+commit 902534cc52238df49513aa2d515b4a4982b79658
+Author: lishuna <lisna@jiedaibao.com>
+Date:   Wed Jul 26 11:49:15 2017 +0800
+
+    update
+
+commit db7e46f8b7d70cbd573f8a137317955ea4492e23
+Author: lishuna <lisna@jiedaibao.com>
+Date:   Wed Jul 26 11:46:16 2017 +0800
+
+    update
+
+commit 090783d429cf9cbeac988ca275ea93037a7c6ad9
+Author: lishuna <lisna@jiedaibao.com>
+Date:   Wed Jul 26 11:33:18 2017 +0800
+
+    update
+```
+回退commit ID是 902534cc52238df49513aa2d515b4a4982b79658
+```
+    git reset --hard 902534cc52238df49513aa2d515b4a4982b79658
+```
+在查看log的时候感觉显示乱，可以用  
+```
+    git log --pretty=oneline
+```
+得到结果如下：
+```
+19b5cc37d1f8727af8c81518d14647c2f97b63e3 修改配置
+dee4fc1047aea5281b4e377326e0fb3f4b59a377 update
+f0b78c474551fb884e0fcc678797f1960a3ff0ec 博客搭建
+863b9f84888f4a0d57760cf7ad1ffa54319243c2 博客搭建
+```
+如果不想获取commitID，还可以通过HEAD关键字来回滚。HEAD表示最新版本，HEAD^表示上一个版本，HEAD^^表示上上个版本，如果想回退上100个版本，实在是不好数，可以用HEAD~100。真心表示这个东西很实用，一不小心把代码提交错了想会滚，就派上用场了。
+*注意，git reset命令既可以回退版本，也可以把暂存区的修改回退到工作区。*
+比如我想回退一个已经提交到暂存区的文件：
+```
+    git reset HEAD file
+```
+
