@@ -1,0 +1,52 @@
+---
+title: 有意思的pipe对于DecimalPipe小数位保留
+date: 2018-05-01 22:30:00
+layout: post
+tags: [javascript,angular2]
+---
+
+利用DecimalPipe，保留小数位
+
+规则：
+{整数位数}.{小数位数最小值}:{小数位数最大值}
+```
+{minIntegerDigits}.{minFractionDigits}-{maxFractionDigits}
+```
+
+```
+import { Component } from '@angular/core';
+
+@Component({
+    selector: 'number-pipe',
+    template: `<div>
+      <!--output '2.718'-->
+      <p>e (no formatting): {{e | number}}</p>
+
+      <!--output '002.71828'-->
+      <p>e (3.1-5): {{e | number:'3.1-5'}}</p>
+
+      <!--output '0,002.71828'-->
+      <p>e (4.5-5): {{e | number:'4.5-5'}}</p>
+
+      <!--output '0 002,71828'-->
+      <p>e (french): {{e | number:'4.5-5':'fr'}}</p>
+
+      <!--output '3.14'-->
+      <p>pi (no formatting): {{pi | number}}</p>
+
+      <!--output '003.14'-->
+      <p>pi (3.1-5): {{pi | number:'3.1-5'}}</p>
+
+      <!--output '003.14000'-->
+      <p>pi (3.5-5): {{pi | number:'3.5-5'}}</p>
+      <p>zero (1.2-2): {{zero | number:'1.2-2'}}</p>
+      <p>zero (1.2-2): {{'' | number:'1.2-2'}}</p>
+    </div>`
+  })
+  export class NumberPipeComponent {
+    pi: number = 3.14;
+    e: number = 2.718281828459045;
+    zero: number = 0;
+  }
+
+```

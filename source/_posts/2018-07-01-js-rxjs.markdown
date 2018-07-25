@@ -1,0 +1,99 @@
+---
+title: rxjs初试
+date: 2018-07-01 22:30:00
+layout: post
+tags: [javascript,rxjs]
+---
+# rxjs初试
+
+今天学了一下rxjs，发现真的很牛x。到现在感觉自己学的还不6，边学边记笔记吧！
+
+### 1.转换成 observables
+通过Observable的一些静态方法，可以把数组、字符串等转换成多个observables。比如: of、from、fromEvent等。看例子：
+```
+// 来自一个或多个值
+Rx.Observable.of('foo', 'bar');
+
+// 来自数组
+Rx.Observable.from([1,2,3]);
+
+// 来自事件
+Rx.Observable.fromEvent(document.querySelector('button'), 'click');
+
+// 来自 Promise
+Rx.Observable.fromPromise(fetch('/users'));
+
+```
+
+### 2.创建Observable
+通过Observable.create或者new Rx.Subject()会创建一个可执行对象。
+看例子：
+```
+    //从外部产生值
+    var myobservable = new Rx.subject();
+    myobservable.subscribe((value)=>{
+        console.log(value);
+    });
+    myobservable.next('foo');
+    
+    
+    //从内部产生值
+    var myobservable = Rx.Observable.create((obser)=>{
+        obser.next('foo');
+    });
+    myobservable.subscribe(value=>console.log(value));
+```
+
+### 3.控制流动（这个超流弊）
+看完官网的例子，感觉rxjs真是流弊，控制流动控制的真的好。包括过滤（filter）、延迟事件(delay)、事件截流（throttleTime）、在多少秒内禁止事件（debounceTime）、几次后禁止事件（take）、异步触发禁止事件（takeUntil）。看例子：
+```
+ var input = Rx.Observable.fromEvent(document.querySelector('input'), 'input');
+
+    // 过滤掉小于3个字符长度的目标值
+    input.filter(event => event.target.value.length > 2)
+        .map(event => event.target.value)
+        .subscribe(value => { console.log(value) });
+        
+    // 延迟事件
+    input.delay(2000)
+        .map(event => event.target.value)
+        .subscribe(value => { console.log(`delay200:${value}`) });
+    
+    // 每2000ms只能通过一个事件
+    input.throttleTime(2000)
+        .map(event => event.target.value)
+        .subscribe(value => console.log('throttle time: ' + value));
+    
+    // 停止输入后200ms方能通过最新的那个事件
+    input.debounceTime(2000)
+        .map(event => event.target.value)
+        .subscribe(value => console.log('debounceTime: ' + value));
+        
+    // 在3次事件后停止事件流
+    input.take(3)
+        .map(event => event.target.value)
+        .subscribe(value => console.log('take: ' + value));
+    
+    // 直到其他 observable 触发事件才停止事件流   
+    var stopStream = Rx.Observable.fromEvent(document.querySelector('button'), 'click');
+    input.takeUntil(stopStream)
+        .map(event => event.target.value)
+        .subscribe(value => console.log('takeUnitl: ' + value));
+    
+```
+
+### 4.产生值
+产生值就是通过pluck方法，获取源数据，在通过pairwise(传递此次输入的和之前的两个值，是一个数组)、distinct（只允许通过唯一的值）、distinctUntilChanged（不会输出重复的值）。看例子：
+```
+    // 传递之前的两个值
+    input.pluck('target', 'value').pairwise()
+        .subscribe(value => console.log('产生值-pairwise: ' + value)); //output: ["h", "he"]
+        
+    // 允许通过唯一的值
+    input.pluck('data').distinct()
+        .subscribe(value => console.log('产生值-distinct: ' + value)); // output: helo wrd
+    
+    // 不会传递重复的值
+    input.pluck('data').distinctUntilChanged()
+        .subscribe(value => console.log('产生值-distinctUntilChanged: ' + value)); // output: helo word
+```
