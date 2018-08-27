@@ -1,8 +1,24 @@
+
+---
+layout:     post
+title:      "如何让node完美支持es6语法"
+subtitle:   "node es6 babel"
+date:       2018-08-27 15:19:00
+author:     "freefish"
+cdn: header-off
+header-img: "/img/post-bg-2015.jpg"
+tags:
+    - node
+    - es6
+    - babel
+---
+
 首先，建议大家装一下es-checker,看一下在当前node版本下，对es6支持的程度，下面是我本机node版本8.10.0对es6的支持：
 ![image](https://raw.githubusercontent.com/lishuna/MarkdownPhotos/master/es-checker-node8.10.0.jpg)
 其实8.10.0对es6已经达到90%的支持率了，但是如果想用import/export或者async/await是不支持的，这时候就用到了babel.下面就介绍一下如何在node使用babel.
 
 #### node中的babel
+
 ##### npm包安装
 
 1. babel
@@ -10,6 +26,7 @@
 3. babel-plugin-transform-async-to-generator  //为了支持async/await
 4. babel-plugin-transform-runtime     //为了支持async/await，不安装就会报错 关于这个插件的[详细教程](https://segmentfault.com/a/1190000009065987)
 5. babel-preset-es2015
+
 
 ##### 配置.babelrc
 ```
