@@ -17,9 +17,9 @@ tags:
 ![image](https://raw.githubusercontent.com/lishuna/MarkdownPhotos/master/es-checker-node8.10.0.jpg)
 其实8.10.0对es6已经达到90%的支持率了，但是如果想用import/export或者async/await是不支持的，这时候就用到了babel.下面就介绍一下如何在node使用babel.
 
-#### node中的babel
+## node中的babel
 
-##### npm包安装
+### npm包安装
 
 1. babel
 2. babel-core
@@ -28,7 +28,7 @@ tags:
 5. babel-preset-es2015
 
 
-##### 配置.babelrc
+### 配置.babelrc
 ```
 {
     "presets": [
@@ -41,7 +41,7 @@ tags:
 }
 ```
 
-##### node入口文件
+### node入口文件
 入口文件需要加上一句话,并且需要加在最顶部。代表之后的文件都会自动通过babel编译，但是并babel不会编译当前的入口文件，所有当前文件不能用import/export等一些语法。
 ```
 require('babel-core/register');
